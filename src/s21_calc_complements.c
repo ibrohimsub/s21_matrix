@@ -1,92 +1,107 @@
 #include "s21_matrix.h"
 
-int s21_calc_complements(matrix_t *A, matrix_t *result) {
-    int flag = OK;
-    
-    if (A == NULL || result == NULL || A->rows <= 0 || A->columns <= 0) {
-        flag = ERR_MAT;
-        goto END;
-    }
-    
-    int n = A->rows;
-    if (n != A->columns) {
-        flag = ERR_MAT;
-        goto END;
-    }
-    
-    result->rows = n;
-    result->columns = n;
-    
-    result->matrix = calloc(n, sizeof(double *));
-    if (result->matrix == NULL) {
-        flag = ERR_CAL;
-        goto END;
-    }
-    
-    for (int i = 0; i < n; i++) {
-        result->matrix[i] = calloc(n, sizeof(double));
-        if (result->matrix[i] == NULL) {
-            flag = ERR_CAL;
-            for (int j = 0; j < i; j++) {
-                free(result->matrix[j]);
-            }
-            free(result->matrix);
-            goto END;
-        }
-        for (int j = 0; j < n; j++) {
-            matrix_t minor_matrix;
-            minor_matrix.rows = n - 1;
-            minor_matrix.columns = n - 1;
-            minor_matrix.matrix = calloc(minor_matrix.rows, sizeof(double *));
-            if (minor_matrix.matrix == NULL) {
-                flag = ERR_CAL;
-                goto FREE_MATRIX;
-            }
-            for (int k = 0; k < minor_matrix.rows; k++) {
-                minor_matrix.matrix[k] = calloc(minor_matrix.columns, sizeof(double));
-                if (minor_matrix.matrix[k] == NULL) {
-                    flag = ERR_CAL;
-                    for (int l = 0; l < k; l++) {
-                        free(minor_matrix.matrix[l]);
-                    }
-                    free(minor_matrix.matrix);
-                    goto FREE_MATRIX;
-                }
-            }
-            int sign = ((i + j) % 2 == 0) ? 1 : -1;
-            double minor = 0;
-            for (int k = 0; k < n; k++) {
-                if (k != i) {
-                    for (int l = 0; l < n; l++) {
-                        if (l != j) {
-                            minor_matrix.matrix[k - (k > i)][l - (l > j)] = A->matrix[k][l];
-                        }
-                    }
-                }
-            }
-            flag = s21_calc_minor(&minor_matrix, &minor);
-            if (flag != OK) {
-                for (int k = 0; k < minor_matrix.rows; k++) {
-                    free(minor_matrix.matrix[k]);
-                }
-                free(minor_matrix.matrix);
-                goto FREE_MATRIX;
-            }
-            result->matrix[i][j] = sign * minor;
-            for (int k = 0; k < minor_matrix.rows; k++) {
-                free(minor_matrix.matrix[k]);
-            }
-            free(minor_matrix.matrix);
-        }
-    }
-    
-END:
-    return flag;
-    
-FREE_MATRIX:
-    for (int i = 0; i < n; i++) {
-        free(result->matrix[i]);
-    }
-    free(result->matrix);
+// Function to calculate the complement matrix of a given matrix
+int s21_calc_complements(matrix_t* A, matrix_t* result) {
+  int flag = OK;  // set initial flag to OK
+
+  // Check if the matrix is square
+  if (A->rows != A->columns) {
+    flag = ERR_MAT;
     goto END;
+  }
+
+  // Create the matrix of minors
+  matrix_t matrix_of_minors;
+  flag = s21_create_matrix(A->rows, A->columns, &matrix_of_minors);
+  if (flag != OK) {
+    goto END;
+  }
+  flag = s21_matrix_of_minors(A, &matrix_of_minors);
+  if (flag != OK) {
+    s21_remove_matrix(&matrix_of_minors);
+    goto END;
+  }
+
+  // Calculate the matrix of cofactors
+  for (int i = 0; i < A->rows; i++) {
+    for (int j = 0; j < A->columns; j++) {
+      result->matrix[i][j] = pow(-1.0, i + j) * matrix_of_minors.matrix[i][j];
+    }
+  }
+
+  // Free memory for the matrix of minors
+  s21_remove_matrix(&matrix_of_minors);
+
+  //   // Transpose the matrix of cofactors to get the adjugate matrix
+  //   matrix_t transpose;
+  //   flag = s21_create_matrix(A->rows, A->columns, &transpose);
+  //   if (flag != OK) {
+  //     goto END;
+  //   }
+  //   for (int i = 0; i < A->rows; i++) {
+  //     for (int j = 0; j < A->columns; j++) {
+  //       transpose.matrix[j][i] = result->matrix[i][j];
+  //     }
+  //   }
+
+  //   // Copy the transposed matrix to the result
+  //   for (int i = 0; i < A->rows; i++) {
+  //     for (int j = 0; j < A->columns; j++) {
+  //       result->matrix[i][j] = transpose.matrix[i][j];
+  //     }
+  //   }
+
+  //   // Free memory for the transposed matrix
+  //   s21_remove_matrix(&transpose);
+
+END:
+  return flag;
+}
+
+// Function to calculate the matrix of minors of a given matrix
+int s21_matrix_of_minors(matrix_t* A, matrix_t* result) {
+  int flag = OK;  // set initial flag to OK
+
+  // Check if the matrix is square
+  if (A->rows != A->columns) {
+    flag = ERR_MAT;
+    goto END;
+  }
+
+  // Create the matrix of minors
+  for (int i = 0; i < A->rows; i++) {
+    for (int j = 0; j < A->columns; j++) {
+      // Create the submatrix
+      matrix_t submatrix;
+      s21_create_matrix(A->rows - 1, A->columns - 1, &submatrix);
+      for (int m = 0; m < A->rows; m++) {
+        if (m == i) {
+          continue;
+        }
+        int k = 0;
+        for (int n = 0; n < A->columns; n++) {
+          if (n == j) {
+            continue;
+          }
+          submatrix.matrix[m < i ? m : m - 1][k] = A->matrix[m][n];
+          k++;
+        }
+      }
+      // Calculate the determinant of the submatrix
+      double det = 0.0;
+      flag = s21_determinant(&submatrix, &det);
+      if (flag != OK) {
+        s21_remove_matrix(&submatrix);
+        s21_remove_matrix(result);
+        goto END;
+      }
+      // Set the element in the matrix of minors
+      result->matrix[i][j] = det;
+      // Free memory for the submatrix
+      s21_remove_matrix(&submatrix);
+    }
+  }
+
+END:
+  return flag;
 }
