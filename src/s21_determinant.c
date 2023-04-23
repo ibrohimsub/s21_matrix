@@ -1,56 +1,54 @@
 #include "s21_matrix.h"
 
 int s21_determinant(matrix_t *A, double *result) {
-  int flag = OK;  // set initial flag to OK
-  double det = 0.0;
+  int flag = OK;
 
-  // Check if the matrix is square
-  if (A->rows != A->columns) {
+  if (!s21_matrix_not_NULL(A) || A->rows != A->columns) {
     flag = ERR_MAT;
-    goto END;
-  }
+  } else {
+    int n = A->rows;
 
-  // Base case: 2x2 matrix
-  if (A->rows == 2) {
-    det = A->matrix[0][0] * A->matrix[1][1] - A->matrix[0][1] * A->matrix[1][0];
-  }
-  // Recursive case: use Laplace expansion
-  else {
-    for (int j = 0; j < A->columns; j++) {
-      // Create the submatrix
-      matrix_t submatrix;
-      s21_create_matrix(A->rows - 1, A->columns - 1, &submatrix);
-      for (int i = 1; i < A->rows; i++) {
-        int k = 0;
-        for (int m = 0; m < A->columns; m++) {
-          if (m != j) {
-            submatrix.matrix[i - 1][k] = A->matrix[i][m];
-            k++;
+    // Base case: 2x2 matrix
+    if (n == 2) {
+      *result =
+          A->matrix[0][0] * A->matrix[1][1] - A->matrix[0][1] * A->matrix[1][0];
+    } else {
+      double det = 0.0;
+      int sign = 1;
+
+      // Create cofactor matrix
+      matrix_t cofactor;
+      s21_create_matrix(n - 1, n - 1, &cofactor);
+
+      for (int i = 0; i < n; i++) {
+        // Get cofactor of element A[0][i]
+        int r = 0;
+        for (int j = 0; j < n; j++) {
+          if (j == i) continue;
+
+          for (int k = 1; k < n; k++) {
+            cofactor.matrix[r][k - 1] = A->matrix[j][k];
           }
+
+          r++;
         }
+
+        // Add the cofactor times the sign to the determinant
+        double subdet;
+        flag = s21_determinant(&cofactor, &subdet);
+        if (flag != OK) {
+          s21_remove_matrix(&cofactor);
+          return ERR_CAL;
+        }
+
+        det += sign * A->matrix[0][i] * subdet;
+        sign *= -1;
       }
-      // Calculate the cofactor
-      double cofactor = 1.0;
-      if (j % 2 == 1) {
-        cofactor = -1.0;
-      }
-      // Recursively calculate the determinant of the submatrix
-      double subdet = 0.0;
-      flag = s21_determinant(&submatrix, &subdet);
-      if (flag != OK) {
-        s21_remove_matrix(&submatrix);
-        goto END;
-      }
-      // Add the term to the determinant
-      det += cofactor * A->matrix[0][j] * subdet;
-      // Free memory for the submatrix
-      s21_remove_matrix(&submatrix);
+
+      *result = det;
+      s21_remove_matrix(&cofactor);
     }
   }
 
-  // Set the result
-  *result = det;
-
-END:
   return flag;
 }

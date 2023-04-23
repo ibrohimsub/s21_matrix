@@ -26,4 +26,4 @@ Suite *suite_inverse_matrix(void);
 void testcases(Suite *testcase);
 double get_rand(double min, double max);
 
-#endif // SRC_TESTS_S21_MATRIX_H_
+#endif  // SRC_TESTS_S21_MATRIX_H_

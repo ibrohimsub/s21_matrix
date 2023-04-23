@@ -1,13 +1,15 @@
 #ifndef S21_MATRIX_H
 #define S21_MATRIX_H
 
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <math.h>
 
 #define OK 0       // OK
 #define ERR_MAT 1  // Error, incorrect matrix
-#define ERR_CAL 2  // Calculation error (memory allocation failed)
+#define ERR_CAL \
+  2  // Calculation error (mismatched matrix sizes; matrix for which
+     // calculations cannot be performed, etc.)
 
 // Matrix structure
 typedef struct matrix_struct {
@@ -25,6 +27,7 @@ void s21_remove_matrix(matrix_t* A);                             // done
 #define FAILURE 0
 
 int s21_eq_matrix(matrix_t* A, matrix_t* B);  // done
+int s21_matrix_not_NULL(matrix_t* matrix);
 
 // Matrix addition and subtraction
 int s21_sum_matrix(matrix_t* A, matrix_t* B, matrix_t* result);  // done

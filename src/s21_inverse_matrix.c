@@ -1,40 +1,34 @@
 #include "s21_matrix.h"
 
 int s21_inverse_matrix(matrix_t *A, matrix_t *result) {
-  int flag = OK;  // set initial flag to OK
-  double det = 0.0;
+  int flag = OK;
 
-  // Check if the matrix is square
-  if (A->rows != A->columns) {
-    flag = ERR_MAT;
-    goto END;
-  }
+  if (s21_matrix_not_NULL(A)) {
+    double det;
 
-  // Calculate the determinant
-  flag = s21_determinant(A, &det);
-  if (flag != OK) {
-    goto END;
-  }
+    s21_determinant(A, &det);
 
-  // Check if the determinant is zero
-  if (det == 0.0) {
-    flag = ERR_MAT;
-    goto END;
-  }
+    if (det != 0) {
+      matrix_t tmp_calc;
 
-  // Calculate the adjugate matrix
-  flag = s21_calc_complements(A, result);
-  if (flag != OK) {
-    goto END;
-  }
+      flag = s21_calc_complements(A, &tmp_calc);
 
-  // Divide by the determinant
-  for (int i = 0; i < result->rows; i++) {
-    for (int j = 0; j < result->columns; j++) {
-      result->matrix[i][j] /= det;
+      if (flag == OK) {
+        matrix_t tmp_trans;
+
+        flag = s21_transpose(&tmp_calc, &tmp_trans);
+        if (flag == OK) {
+          s21_mult_number(&tmp_trans, 1 / det, result);
+        }
+        s21_remove_matrix(&tmp_trans);
+      }
+      s21_remove_matrix(&tmp_calc);
+    } else {
+      flag = ERR_CAL;
     }
+  } else {
+    flag = ERR_MAT;
   }
 
-END:
   return flag;
 }

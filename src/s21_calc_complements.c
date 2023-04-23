@@ -1,107 +1,54 @@
 #include "s21_matrix.h"
 
-// Function to calculate the complement matrix of a given matrix
-int s21_calc_complements(matrix_t* A, matrix_t* result) {
-  int flag = OK;  // set initial flag to OK
+int s21_calc_complements(matrix_t *A, matrix_t *result) {
+  int flag = OK;
 
-  // Check if the matrix is square
-  if (A->rows != A->columns) {
+  if (!s21_matrix_not_NULL(A) || A->rows != A->columns ||
+      !s21_matrix_not_NULL(result) || result->rows != A->rows ||
+      result->columns != A->columns) {
     flag = ERR_MAT;
-    goto END;
-  }
+  } else {
+    int n = A->rows;
 
-  // Create the matrix of minors
-  matrix_t matrix_of_minors;
-  flag = s21_create_matrix(A->rows, A->columns, &matrix_of_minors);
-  if (flag != OK) {
-    goto END;
-  }
-  flag = s21_matrix_of_minors(A, &matrix_of_minors);
-  if (flag != OK) {
-    s21_remove_matrix(&matrix_of_minors);
-    goto END;
-  }
+    // Create cofactor matrix
+    matrix_t cofactor;
+    s21_create_matrix(n - 1, n - 1, &cofactor);
 
-  // Calculate the matrix of cofactors
-  for (int i = 0; i < A->rows; i++) {
-    for (int j = 0; j < A->columns; j++) {
-      result->matrix[i][j] = pow(-1.0, i + j) * matrix_of_minors.matrix[i][j];
-    }
-  }
+    for (int i = 0; i < n; i++) {
+      for (int j = 0; j < n; j++) {
+        // Get cofactor of element A[i][j]
+        int r = 0;
+        int c = 0;
+        for (int k = 0; k < n; k++) {
+          if (k == i) continue;
 
-  // Free memory for the matrix of minors
-  s21_remove_matrix(&matrix_of_minors);
+          for (int l = 0; l < n; l++) {
+            if (l == j) continue;
 
-  //   // Transpose the matrix of cofactors to get the adjugate matrix
-  //   matrix_t transpose;
-  //   flag = s21_create_matrix(A->rows, A->columns, &transpose);
-  //   if (flag != OK) {
-  //     goto END;
-  //   }
-  //   for (int i = 0; i < A->rows; i++) {
-  //     for (int j = 0; j < A->columns; j++) {
-  //       transpose.matrix[j][i] = result->matrix[i][j];
-  //     }
-  //   }
-
-  //   // Copy the transposed matrix to the result
-  //   for (int i = 0; i < A->rows; i++) {
-  //     for (int j = 0; j < A->columns; j++) {
-  //       result->matrix[i][j] = transpose.matrix[i][j];
-  //     }
-  //   }
-
-  //   // Free memory for the transposed matrix
-  //   s21_remove_matrix(&transpose);
-
-END:
-  return flag;
-}
-
-// Function to calculate the matrix of minors of a given matrix
-int s21_matrix_of_minors(matrix_t* A, matrix_t* result) {
-  int flag = OK;  // set initial flag to OK
-
-  // Check if the matrix is square
-  if (A->rows != A->columns) {
-    flag = ERR_MAT;
-    goto END;
-  }
-
-  // Create the matrix of minors
-  for (int i = 0; i < A->rows; i++) {
-    for (int j = 0; j < A->columns; j++) {
-      // Create the submatrix
-      matrix_t submatrix;
-      s21_create_matrix(A->rows - 1, A->columns - 1, &submatrix);
-      for (int m = 0; m < A->rows; m++) {
-        if (m == i) {
-          continue;
-        }
-        int k = 0;
-        for (int n = 0; n < A->columns; n++) {
-          if (n == j) {
-            continue;
+            cofactor.matrix[r][c] = A->matrix[k][l];
+            c++;
           }
-          submatrix.matrix[m < i ? m : m - 1][k] = A->matrix[m][n];
-          k++;
+
+          c = 0;
+          r++;
         }
+
+        // Calculate determinant of cofactor matrix
+        double subdet;
+        flag = s21_determinant(&cofactor, &subdet);
+        if (flag != OK) {
+          s21_remove_matrix(&cofactor);
+          return ERR_CAL;
+        }
+
+        // Calculate cofactor and assign it to result matrix
+        double sign = ((i + j) % 2 == 0) ? 1.0 : -1.0;
+        result->matrix[j][i] = sign * subdet;
       }
-      // Calculate the determinant of the submatrix
-      double det = 0.0;
-      flag = s21_determinant(&submatrix, &det);
-      if (flag != OK) {
-        s21_remove_matrix(&submatrix);
-        s21_remove_matrix(result);
-        goto END;
-      }
-      // Set the element in the matrix of minors
-      result->matrix[i][j] = det;
-      // Free memory for the submatrix
-      s21_remove_matrix(&submatrix);
     }
+
+    s21_remove_matrix(&cofactor);
   }
 
-END:
   return flag;
 }
