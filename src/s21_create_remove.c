@@ -24,7 +24,6 @@ int s21_create_matrix(int rows, int columns, matrix_t *result) {
 // Function to remove a matrix and free its memory
 void s21_remove_matrix(matrix_t *A) {
   if (A->matrix) {
-    // Free memory for matrix elements
     for (int i = 0; i < A->rows; i++) {
       if (A->matrix[i]) {
         free(A->matrix[i]);
