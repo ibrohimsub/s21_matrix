@@ -3,51 +3,49 @@
 int s21_determinant(matrix_t *A, double *result) {
   int flag = OK;
 
-  if (!s21_matrix_not_NULL(A) || A->rows != A->columns) {
+  if (!s21_matrix_not_NULL(A)) {
     flag = ERR_MAT;
+  } else if (A->rows != A->columns) {
+    flag = ERR_CAL;
   } else {
     int n = A->rows;
+    double det = 0;
+    matrix_t B;
 
-    // Base case: 2x2 matrix
-    if (n == 2) {
-      *result =
-          A->matrix[0][0] * A->matrix[1][1] - A->matrix[0][1] * A->matrix[1][0];
+    // Check for the base case of 1x1 matrix
+    if (n == 1) {
+      det = A->matrix[0][0];
     } else {
-      double det = 0.0;
-      int sign = 1;
-
-      // Create cofactor matrix
-      matrix_t cofactor;
-      s21_create_matrix(n - 1, n - 1, &cofactor);
+      // Allocate memory for the submatrix
+      s21_create_matrix(n - 1, n - 1, &B);
 
       for (int i = 0; i < n; i++) {
-        // Get cofactor of element A[0][i]
-        int r = 0;
-        for (int j = 0; j < n; j++) {
-          if (j == i) continue;
-
-          for (int k = 1; k < n; k++) {
-            cofactor.matrix[r][k - 1] = A->matrix[j][k];
+        // Construct the submatrix by removing the i-th row and the 0-th column
+        for (int j = 1; j < n; j++) {
+          for (int k = 0; k < n; k++) {
+            if (k < i) {
+              B.matrix[j - 1][k] = A->matrix[j][k];
+            } else if (k > i) {
+              B.matrix[j - 1][k - 1] = A->matrix[j][k];
+            }
           }
-
-          r++;
         }
 
-        // Add the cofactor times the sign to the determinant
-        double subdet;
-        flag = s21_determinant(&cofactor, &subdet);
-        if (flag != OK) {
-          s21_remove_matrix(&cofactor);
-          return ERR_CAL;
+        // Calculate the determinant recursively by multiplying the element with
+        // its cofactor
+        double sign = (i % 2 == 0) ? 1.0 : -1.0;
+        double cofactor;
+        flag = s21_determinant(&B, &cofactor);
+        if (flag == OK) {
+          det += sign * A->matrix[0][i] * cofactor;
         }
-
-        det += sign * A->matrix[0][i] * subdet;
-        sign *= -1;
       }
 
-      *result = det;
-      s21_remove_matrix(&cofactor);
+      // Free memory for the submatrix
+      s21_remove_matrix(&B);
     }
+
+    *result = det;
   }
 
   return flag;

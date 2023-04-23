@@ -2,7 +2,7 @@
 
 int s21_eq_matrix(matrix_t *A, matrix_t *B) {
   int flag = FAILURE;
-  if (s21_not_NULL(A) && s21_not_NULL(B)) {
+  if (s21_matrix_not_NULL(A) && s21_matrix_not_NULL(B)) {
     // Check if the matrices have the same dimensions
     if (A->rows == B->rows && A->columns == B->columns) {
       flag = SUCCESS;

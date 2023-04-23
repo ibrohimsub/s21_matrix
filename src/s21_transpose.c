@@ -11,8 +11,6 @@ int s21_transpose(matrix_t *A, matrix_t *result) {
           result->matrix[j][i] = A->matrix[i][j];
         }
       }
-    } else {
-      flag = ERR_CAL;
     }
   } else {
     flag = ERR_MAT;

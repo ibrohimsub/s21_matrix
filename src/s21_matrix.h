@@ -18,6 +18,8 @@ typedef struct matrix_struct {
   int columns;
 } matrix_t;
 
+void print_matrix(matrix_t* matrix);
+
 // Matrix creation and removal
 int s21_create_matrix(int rows, int columns, matrix_t* result);  // done
 void s21_remove_matrix(matrix_t* A);                             // done
@@ -42,10 +44,11 @@ int s21_transpose(matrix_t* A, matrix_t* result);  // done
 
 // Matrix of minors and matrix of cofactors
 int s21_calc_complements(matrix_t* A, matrix_t* result);  // done
-int s21_matrix_of_minors(matrix_t* A, matrix_t* result);
+double s21_minor(matrix_t* A, int i, int j);
 
 // Matrix determinant
 int s21_determinant(matrix_t* A, double* result);  // done
+// void s21_submatrix(matrix_t* A, int col, matrix_t* result);
 
 // Matrix inverse
 int s21_inverse_matrix(matrix_t* A, matrix_t* result);  // done

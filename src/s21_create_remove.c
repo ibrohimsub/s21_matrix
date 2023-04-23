@@ -1,23 +1,21 @@
 #include "s21_matrix.h"
 
 // Function to create a new matrix
-int s21_create_matrix(int rows, int columns, matrix_t *flagult) {
+int s21_create_matrix(int rows, int columns, matrix_t *result) {
   int flag = OK;
 
   if (rows < 1 || columns < 1) {
     flag = ERR_MAT;
   } else {
-    flagult->rows = rows;
-    flagult->columns = columns;
-    flagult->matrix = calloc(rows, sizeof(double *));
+    result->rows = rows;
+    result->columns = columns;
+    result->matrix = calloc(rows, sizeof(double *));
     flag = ERR_MAT;
-    if (flagult->matrix != NULL) {
-      for (int i = 0; i < flagult->rows; i++) {
-        flagult->matrix[i] = calloc(columns, sizeof(double));
+    if (result->matrix != NULL) {
+      for (int i = 0; i < result->rows; i++) {
+        result->matrix[i] = calloc(columns, sizeof(double));
       }
       flag = OK;
-    } else {
-      flag = ERR_CAL;
     }
   }
   return flag;
@@ -38,3 +36,13 @@ void s21_remove_matrix(matrix_t *A) {
   A->rows = 0;
   A->columns = 0;
 }
+
+// void print_matrix(matrix_t *matrix) {
+//   // printf("ma1");
+//   for (int i = 0; i < matrix->rows; i++) {
+//     for (int j = 0; j < matrix->columns; j++) {
+//       printf("%.2f ", matrix->matrix[i][j]);
+//     }
+//     printf("\n");
+//   }
+// }

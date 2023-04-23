@@ -11,8 +11,6 @@ int s21_mult_number(matrix_t *A, double number, matrix_t *result) {
           result->matrix[i][j] = A->matrix[i][j] * number;
         }
       }
-    } else {
-      flag = ERR_CAL;
     }
   } else {
     flag = ERR_MAT;
@@ -37,8 +35,6 @@ int s21_mult_matrix(matrix_t *A, matrix_t *B, matrix_t *result) {
           result->matrix[i][j] = sum;
         }
       }
-    } else {
-      flag = ERR_CAL;
     }
   } else {
     flag = ERR_MAT;
